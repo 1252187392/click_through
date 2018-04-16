@@ -2,11 +2,8 @@
 
 from csv import DictReader
 from math import log
-COL_NAME = ['C21', 'device_ip', 'site_id', 'app_id', 'C19', 'C18', \
-            'device_type', 'id', 'C17', 'click', 'C15', 'C14', 'C16', \
-            'device_conn_type', 'C1', 'app_category', 'site_category', \
-            'app_domain', 'site_domain', 'banner_pos', 'device_id', 'C20',\
-            'hour', 'device_model']
+import numpy as np
+from config import *
 
 def data_loader(filename):
     with open(filename) as fin:
@@ -69,6 +66,25 @@ def cal_woe_dict(values,labels):
     woe_dict['default'] = sum_woe / len(woe_dict)
     return woe_dict
 #data_loader('datas/train_part.csv')
+
+def load_hash_data():
+    features = np.load(HASH_FEATURE)
+    labels = np.load(HASH_LABLE)
+    features, test_features, labels, test_labels = train_test_split(features, labels, test_size=0.1, random_state=101)
+
+    return features, test_features, labels, test_labels
+
+def load_woe_data(delete_list = []):
+    #[6, 18, 20]
+    train_features = np.load(WOE_TRAIN_FEATURE)
+    train_labels = np.load(WOE_TRAIN_LABLE)
+
+    test_features = np.load(WOE_TEST_FEATURE)
+    test_labels = np.load(WOE_TEST_LABLE)
+
+    train_features = np.delete(train_features, delete_list, axis=1)
+    test_features = np.delete(test_features, delete_list, axis=1)
+    return np.array(train_features), np.array(test_features), np.array(train_labels), np.array(test_labels)
 
 if __name__ == '__main__':
     test_woe = [[1,1,2,2,3,3],[1,0,1,0,1,0]]

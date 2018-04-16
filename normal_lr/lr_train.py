@@ -9,13 +9,7 @@ from sklearn.externals import joblib
 from csv import DictReader
 import numpy as np
 
-def load_hash_data():
-    idx = np.load('cache_data/hash_idx.npy')
-    features = np.load('cache_data/hash_features.npy')
-    labels = np.load('cache_data/hash_labels.npy')
-    features, test_features, labels, test_labels = train_test_split(features, labels, test_size=0.1, random_state=101)
 
-    return features, test_features, labels, test_labels
 
 def load_woe_data():
     train_features = np.load('cache_data/woe_train_features.npy')

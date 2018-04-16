@@ -1,23 +1,16 @@
 from xgboost import XGBClassifier
 import numpy as np
+import sys
+sys.path.append('.')
 from sklearn.metrics import log_loss,roc_auc_score
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.externals import joblib
-
-def load_woe_data():
-    train_features = np.load('cache_data/woe_train_features.npy')
-    train_labels = np.load('cache_data/woe_train_labels.npy')
-
-    test_features = np.load('cache_data/woe_test_features.npy')
-    test_labels = np.load('cache_data/woe_test_labels.npy')
-
-    train_features = np.delete(train_features, [6, 18, 20], axis=1)
-    test_features = np.delete(test_features, [6, 18, 20], axis=1)
-    return np.array(train_features), np.array(test_features), np.array(train_labels), np.array(test_labels)
+from config import *
+from utils import load_woe_data
 
 
-train_feature,test_feature,train_labels,test_labels = load_woe_data()
+train_feature,test_feature,train_labels,test_labels = load_woe_data([6, 18, 20])
 model = XGBClassifier(max_depth=3,n_estimators=100,gamma=0.1,n_jos = -1,random_state=101,)
 
 model.fit(train_feature,train_labels,verbose=True)

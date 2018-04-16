@@ -7,9 +7,8 @@ from csv import DictReader, DictWriter
 import numpy as np
 import random
 from sklearn.externals import joblib
+from config import *
 
-TRAIN_IDX_PATH = 'cache_data/woe_dict_files/train_id.npy'
-TEST_IDX_PATH = 'cache_data/woe_dict_files/test_idx.npy'
 
 def clean_data_by_hash(filename):
     features = []
@@ -29,11 +28,6 @@ def clean_data_by_hash(filename):
     return np.array(idx), np.array(features), np.array(labels)
 
 def processing_woe_info(filename):
-    COL_NAME = ['C21', 'device_ip', 'site_id', 'app_id', 'C19', 'C18',\
-                'device_type', 'C17', 'C15', 'C14', 'C16',\
-                'device_conn_type', 'C1', 'app_category', 'site_category',\
-                'app_domain', 'site_domain', 'banner_pos', 'device_id', 'C20',\
-                'hour', 'device_model']
     idx = []
     with open(filename) as fin:
         for row in DictReader(fin):
@@ -43,18 +37,17 @@ def processing_woe_info(filename):
     #print len(idx)
     cut = int(len(idx) * 0.95)
     train_idx, test_idx = idx[:cut], idx[cut:]
-    train_file = 'cache_data/woe_dict_files/woe_train.csv'
-    test_file = 'cache_data/woe_dict_files/woe_test.csv'
+
     fin = open(filename)
     for row in DictReader(fin):
         keys = row.keys()
         break
-    train_writer = DictWriter(open(train_file, 'w'),fieldnames=keys)
-    test_writer = DictWriter(open(test_file, 'w'),fieldnames=keys)
+    train_writer = DictWriter(open(WOE_TRAIN_FILE, 'w'),fieldnames=keys)
+    test_writer = DictWriter(open(WOE_TEST_FILE, 'w'),fieldnames=keys)
     train_writer.writeheader()
     test_writer.writeheader()
-    np.save(TRAIN_IDX_PATH, train_idx)
-    np.save(TEST_IDX_PATH, test_idx)
+    #np.save(TRAIN_IDX_PATH, train_idx)
+    #np.save(TEST_IDX_PATH, test_idx)
     train_set = set(train_idx)
     del idx
     write_flag = True
@@ -92,11 +85,6 @@ def clean_data_by_woe(filename):
         one_woe_dict = joblib.load(woe_path+woe_file)
         woe_dict[col_name] = one_woe_dict
     idx, features, labels = [], [], []
-    feature_names = ['site_id', 'C20', 'C19', 'site_domain', 'device_type', 'C17', \
-                     'device_ip', 'C14', 'C16', 'C15', 'device_conn_type', 'C1', \
-                     'app_category', 'site_category', 'app_domain', 'C21', 'banner_pos',\
-                     'app_id', 'device_id', 'hour', 'device_model', 'C18']
-    first = True
     fin = open(filename)
     for row in DictReader(fin):
         idx.append(row['id'])
@@ -107,7 +95,7 @@ def clean_data_by_woe(filename):
         else:
             labels.append(random.randint(0,1))
         feature = []
-        for key in feature_names:
+        for key in FEATURE_NAME:
             #print key
             value = row[key]
             if key == 'hour':
@@ -120,31 +108,21 @@ def clean_data_by_woe(filename):
                     woe = woe_dict[key]['default']
             else:
                 woe = hash(value)
-            #if first:
-            #    feature_names.append(key)
             feature.append(woe)
-        first = False
         features.append(feature)
-    print feature_names
     return np.array(idx), np.array(features), np.array(labels)
 
 if __name__ == '__main__':
-    filename = 'origin_datas/part_train.csv'
-    idx, features, labels = clean_data_by_hash(filename)
-    np.save('cache_data/hash_idx.npy', features)
-    np.save('cache_data/hash_features.npy', features)
-    np.save('cache_data/hash_labels.npy', labels)
+    idx, features, labels = clean_data_by_hash(ORIGIN_TRAIN_FILE)
+    np.save(HASH_FEATURE, features)
+    np.save(HASH_LABLE, labels)
     del features
     del labels
-    processing_woe_info(filename)
-    train_file = 'cache_data/woe_dict_files/woe_train.csv'
-    test_file = 'cache_data/woe_dict_files/woe_test.csv'
-    woe_idx, woe_feature, woe_label = clean_data_by_woe(train_file)
-    np.save('cache_data/woe_train_idx.npy', woe_idx)
-    np.save('cache_data/woe_train_features.npy', woe_feature)
-    np.save('cache_data/woe_train_labels.npy', woe_label)
+    processing_woe_info(ORIGIN_TRAIN_FILE)
+    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TRAIN_FILE)
+    np.save(WOE_TRAIN_FEATURE, woe_feature)
+    np.save(WOE_TRAIN_LABLE, woe_label)
 
-    woe_idx, woe_feature, woe_label = clean_data_by_woe(test_file)
-    np.save('cache_data/woe_test_idx.npy', woe_idx)
-    np.save('cache_data/woe_test_features.npy', woe_feature)
-    np.save('cache_data/woe_test_labels.npy', woe_label)
+    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TEST_FILE)
+    np.save(WOE_TEST_FEATURE, woe_feature)
+    np.save(WOE_TEST_LABLE, woe_label)
