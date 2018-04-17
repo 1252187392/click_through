@@ -10,6 +10,7 @@ COL_NAME = ['C21', 'device_ip', 'site_id', 'app_id', 'C19', 'C18', \
             'hour', 'device_model']
 
 ORIGIN_TRAIN_FILE = 'origin_datas/part_train.csv'
+ORIGIN_TEST_FILE = 'origin_datas/part_test.csv'
 
 WOE_TRAIN_FILE = 'cache_data/woe_dict_files/woe_train.csv'
 WOE_TEST_FILE = 'cache_data/woe_dict_files/woe_test.csv'

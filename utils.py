@@ -1,8 +1,10 @@
 #encoding:utf-8
 
-from csv import DictReader
+from csv import DictReader, DictWriter
 from math import log
 import numpy as np
+from sklearn.metrics import log_loss,roc_auc_score
+from sklearn.model_selection import train_test_split
 from config import *
 
 def data_loader(filename):
@@ -85,6 +87,35 @@ def load_woe_data(delete_list = []):
     train_features = np.delete(train_features, delete_list, axis=1)
     test_features = np.delete(test_features, delete_list, axis=1)
     return np.array(train_features), np.array(test_features), np.array(train_labels), np.array(test_labels)
+
+def get_auc_logloss(y_true, y_pred, info='train'):
+    '''
+    计算auc logloss，并打印
+    :param y_true:
+    :param y_pred:
+    :param info: train/test
+    :return: auc,logloss
+    '''
+    auc = roc_auc_score(y_true, y_pred)
+    logloss = log_loss(y_true, y_pred)
+    print '{} auc:{},logloss:{}'.format(info, auc, logloss)
+    return auc, logloss
+
+def make_submit_csv(idx, scores, filename):
+    '''
+    生成用于提交的csv文件，数据格式id,click_proba
+    :param idx:
+    :param scores:
+    :param filename:
+    :return:None
+    '''
+    fout = open(filename, 'w')
+    writer = DictWriter(fout, fieldnames=['id', 'click'])
+    writer.writeheader()
+    for Id, score in zip(idx,scores):
+        row = {'id':Id, 'click':score}
+        writer.writerow(row)
+    fout.close()
 
 if __name__ == '__main__':
     test_woe = [[1,1,2,2,3,3],[1,0,1,0,1,0]]
