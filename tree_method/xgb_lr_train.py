@@ -13,7 +13,7 @@ from utils import *
 mode = 'hash'
 if len(sys.argv) > 1:
     mode = str(sys.argv[1])
-    assert mode in ['hash','woe']:
+    assert mode in ['hash','woe']
 if mode == 'hash':
     train_features,test_features, train_lables, test_labels = load_hash_data()
 else:
