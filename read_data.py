@@ -146,7 +146,7 @@ def split_mode():
     dirname = ORIGIN_TRAIN_FILE.replace('.csv','')
     part_train_files = os.listdir(dirname)
     save_dirname = HASH_FEATURE.replace('.npy','/')
-    os.system('mkdir ' + dirname)
+    os.system('mkdir ' + save_dirname)
     for part_file in part_train_files:
         if '.csv' not in part_file:
             continue
