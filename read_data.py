@@ -125,7 +125,7 @@ def clean_data_by_woe(filename):
         features.append(feature)
     return np.array(idx), np.array(features), np.array(labels)
 
-if __name__ == '__main__':
+def full_mode():
     idx, features, labels = clean_data_by_hash(ORIGIN_TRAIN_FILE)
     np.save(HASH_FEATURE, features)
     np.save(HASH_LABLE, labels)
@@ -139,3 +139,41 @@ if __name__ == '__main__':
     woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TEST_FILE)
     np.save(WOE_TEST_FEATURE, woe_feature)
     np.save(WOE_TEST_LABLE, woe_label)
+
+def split_mode():
+    if not os.path.exists(ORIGIN_TEST_FILE.replace('.csv','')):
+        os.system('python split_csv.py {} 8000000'.format(ORIGIN_TRAIN_FILE))
+    dirname = ORIGIN_TRAIN_FILE.replace('.csv','')
+    part_train_files = os.listdir(dirname)
+    save_dirname = HASH_FEATURE.replace('.npy','/')
+    os.system('mkdir ' + dirname)
+    for part_file in part_train_files:
+        if '.csv' not in part_file:
+            continue
+        idx, features, labels = clean_data_by_hash(dirname + '/' + part_file)
+        np.save(save_dirname+part_file.replace('.csv',''), features)
+        np.save(save_dirname+part_file.replace('.csv',''), labels)
+    processing_woe_info(ORIGIN_TRAIN_FILE)
+    if not os.path.exists(WOE_TRAIN_FILE.replace('.csv','')):
+        os.system('python split_csv.py {} 8000000'.format(WOE_TRAIN_FILE))
+    dirname = WOE_TRAIN_FILE.replace('.csv', '')
+    part_train_files = os.listdir(dirname)
+    save_dirname = WOE_TRAIN_FEATURE.replace('.npy','/')
+    os.system('mkdir ' + save_dirname)
+    for part_file in part_train_files:
+        if '.csv' not in part_file:
+            continue
+        woe_idx, woe_feature, woe_label = clean_data_by_woe(dirname+'/'+part_file)
+        np.save(save_dirname + part_file.replace('.csv',''), woe_feature)
+        np.save(save_dirname + part_file.replace('.csv',''), woe_label)
+    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TEST_FILE)
+    np.save(WOE_TEST_FEATURE, woe_feature)
+    np.save(WOE_TEST_LABLE, woe_label)
+if __name__ == '__main__':
+    assert len(sys.argv) > 1
+    mode = sys.argv[1]
+    assert mode in ['full','split']
+    if mode == 'full':
+        full_mode()
+    else:
+        split_mode()
