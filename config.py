@@ -9,17 +9,17 @@ COL_NAME = ['C21', 'device_ip', 'site_id', 'app_id', 'C19', 'C18', \
             'app_domain', 'site_domain', 'banner_pos', 'device_id', 'C20',\
             'hour', 'device_model']
 
-ORIGIN_TRAIN_FILE = 'origin_datas/part_train.csv'
-ORIGIN_TEST_FILE = 'origin_datas/part_test.csv'
+ORIGIN_TRAIN_FILE = 'origin_datas/train.csv'
+ORIGIN_TEST_FILE = 'origin_datas/test.csv'
 
 WOE_TRAIN_FILE = 'cache_data/woe_train.csv'
 WOE_TEST_FILE = 'cache_data/woe_test.csv'
 
-WOE_TRAIN_SAVE = 'cache_data/woe_train_'
+WOE_TRAIN_SAVE = 'cache_data/woe_train'
 WOE_TRAIN_FEATURE = 'cache_data/woe_train_features.npy'
 WOE_TRAIN_LABLE = 'cache_data/woe_train_lables.npy'
 
-WOE_TEST_SAVE = 'cache_data/woe_train_'
+WOE_TEST_SAVE = 'cache_data/woe_test'
 WOE_TEST_FEATURE = 'cache_data/woe_test_features.npy'
 WOE_TEST_LABLE = 'cache_data/woe_test_lables.npy'
 
