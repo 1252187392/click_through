@@ -12,14 +12,17 @@ COL_NAME = ['C21', 'device_ip', 'site_id', 'app_id', 'C19', 'C18', \
 ORIGIN_TRAIN_FILE = 'origin_datas/part_train.csv'
 ORIGIN_TEST_FILE = 'origin_datas/part_test.csv'
 
-WOE_TRAIN_FILE = 'cache_data/woe_dict_files/woe_train.csv'
-WOE_TEST_FILE = 'cache_data/woe_dict_files/woe_test.csv'
+WOE_TRAIN_FILE = 'cache_data/woe_train.csv'
+WOE_TEST_FILE = 'cache_data/woe_test.csv'
 
+WOE_TRAIN_SAVE = 'cache_data/woe_train_'
 WOE_TRAIN_FEATURE = 'cache_data/woe_train_features.npy'
-WOE_TRAIN_LABLE = 'cache_data/woe_train_labels.npy'
+WOE_TRAIN_LABLE = 'cache_data/woe_train_lables.npy'
 
+WOE_TEST_SAVE = 'cache_data/woe_train_'
 WOE_TEST_FEATURE = 'cache_data/woe_test_features.npy'
-WOE_TEST_LABLE = 'cache_data/woe_test_labels.npy'
+WOE_TEST_LABLE = 'cache_data/woe_test_lables.npy'
 
+HASH_SAVE = 'cache_data/hash_'
 HASH_FEATURE = 'cache_data/hash_features.npy'
-HASH_LABLE = 'cache_data/hash_labels.npy'
+HASH_LABLE = 'cache_data/hash_lables.npy'
