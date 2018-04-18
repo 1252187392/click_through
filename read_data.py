@@ -8,7 +8,7 @@ import numpy as np
 import random
 from sklearn.externals import joblib
 from config import *
-
+from multiprocessing import Pool
 
 def clean_data_by_hash(filename):
     features = []
@@ -27,14 +27,24 @@ def clean_data_by_hash(filename):
     fin.close()
     return np.array(idx), np.array(features), np.array(labels)
 
+def make_one_woe(values,labels,col):
+    one_woe_dict = cal_woe_dict(values, labels)
+    joblib.dump(one_woe_dict, 'cache_data/woe_dict_files/{}_woe.dict'.format(col))
+
 def processing_woe_info(filename):
+    '''
+    计算特征对应的woe值
+
+
+    :param filename:
+    :return:
+    '''
     idx = []
     with open(filename) as fin:
         for row in DictReader(fin):
             ID = row['id']
             idx.append(ID)
     random.shuffle(idx)
-    #print len(idx)
     cut = int(len(idx) * 0.95)
     train_idx, test_idx = idx[:cut], idx[cut:]
 
@@ -50,6 +60,7 @@ def processing_woe_info(filename):
     #np.save(TEST_IDX_PATH, test_idx)
     train_set = set(train_idx)
     del idx
+    pool = Pool(processes=4)
     write_flag = True
     for col in COL_NAME:
         if col == 'device_ip' or col == 'device_id' or col == 'device_model':
@@ -71,8 +82,10 @@ def processing_woe_info(filename):
         fin.close()
         write_flag = False
         print col,len(set(values))
-        one_woe_dict = cal_woe_dict(values,labels)
-        joblib.dump(one_woe_dict,'cache_data/woe_dict_files/{}_woe.dict'.format(col))
+        pool.apply_async(make_one_woe,args=(values,labels,col))
+    pool.close()
+    pool.join()
+
 
 def clean_data_by_woe(filename):
     woe_dict = {}
