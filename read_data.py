@@ -126,49 +126,50 @@ def clean_data_by_woe(filename):
     return np.array(idx), np.array(features), np.array(labels)
 
 def full_mode():
-    idx, features, labels = clean_data_by_hash(ORIGIN_TRAIN_FILE)
-    np.save(HASH_FEATURE, features)
-    np.save(HASH_LABLE, labels)
-    del features
-    del labels
+    clean_data_task(ORIGIN_TRAIN_FILE, HASH_SAVE)
     processing_woe_info(ORIGIN_TRAIN_FILE)
-    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TRAIN_FILE)
-    np.save(WOE_TRAIN_FEATURE, woe_feature)
-    np.save(WOE_TRAIN_LABLE, woe_label)
+    clean_data_task(WOE_TRAIN_FILE, WOE_TRAIN_SAVE, 'woe')
+    clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
 
-    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TEST_FILE)
-    np.save(WOE_TEST_FEATURE, woe_feature)
-    np.save(WOE_TEST_LABLE, woe_label)
+def clean_data_task(filename,save_path,mode='hash'):
+    if mode == 'hash':
+        idx, features, lables = clean_data_by_hash(filename)
+    else:
+        idx, features, lables = clean_data_by_woe(filename)
+    np.save(save_path+'_features.npy', features)
+    np.save(save_path+'_lables.npy', lables)
 
 def split_mode():
     if not os.path.exists(ORIGIN_TEST_FILE.replace('.csv','')):
-        os.system('python split_csv.py {} 8000000'.format(ORIGIN_TRAIN_FILE))
+        os.system('python split_csv.py {} 5000000'.format(ORIGIN_TRAIN_FILE))
     dirname = ORIGIN_TRAIN_FILE.replace('.csv','')
     part_train_files = os.listdir(dirname)
     save_dirname = HASH_FEATURE.replace('.npy','/')
     os.system('mkdir ' + dirname)
+    pool = Pool(processes=2)
     for part_file in part_train_files:
         if '.csv' not in part_file:
             continue
-        idx, features, labels = clean_data_by_hash(dirname + '/' + part_file)
-        np.save(save_dirname+part_file.replace('.csv',''), features)
-        np.save(save_dirname+part_file.replace('.csv',''), labels)
+        save_path = save_dirname+part_file.replace('.csv','')
+        pool.apply_async(clean_data_task,(dirname + '/' + part_file, save_path))
+    pool.close()
+    pool.join()
     processing_woe_info(ORIGIN_TRAIN_FILE)
     if not os.path.exists(WOE_TRAIN_FILE.replace('.csv','')):
-        os.system('python split_csv.py {} 8000000'.format(WOE_TRAIN_FILE))
+        os.system('python split_csv.py {} 5000000'.format(WOE_TRAIN_FILE))
     dirname = WOE_TRAIN_FILE.replace('.csv', '')
     part_train_files = os.listdir(dirname)
     save_dirname = WOE_TRAIN_FEATURE.replace('.npy','/')
     os.system('mkdir ' + save_dirname)
+    pool = Pool(processes=2)
     for part_file in part_train_files:
         if '.csv' not in part_file:
             continue
-        woe_idx, woe_feature, woe_label = clean_data_by_woe(dirname+'/'+part_file)
-        np.save(save_dirname + part_file.replace('.csv',''), woe_feature)
-        np.save(save_dirname + part_file.replace('.csv',''), woe_label)
-    woe_idx, woe_feature, woe_label = clean_data_by_woe(WOE_TEST_FILE)
-    np.save(WOE_TEST_FEATURE, woe_feature)
-    np.save(WOE_TEST_LABLE, woe_label)
+        save_path = save_dirname + part_file.replace('.csv','')
+        pool.apply_async(clean_data_task,(dirname + '/' + part_file, save_path,'woe'))
+    pool.close()
+    pool.join()
+    clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
 if __name__ == '__main__':
     assert len(sys.argv) > 1
     mode = sys.argv[1]
