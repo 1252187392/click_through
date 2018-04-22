@@ -9,60 +9,53 @@ import random
 from sklearn.externals import joblib
 from config import *
 from multiprocessing import Pool
+from datetime import datetime
 
-def clean_data_by_hash(filename):
-    features = []
-    labels = []
+def split_train_test_file(filename,rate):
+    '''
+    spilt origin file to trian/test file
+    :param filename:
+    :return: None
+    '''
+    print '{} begin split {},rate {}'.format(datetime.now(),filename,rate)
     idx = []
-    D = 2**20
-    fin = open(filename)
-    cnt = 0
-    for row in DictReader(fin):
-        #return row.keys()
-        ID,feature,label = hash_data(cnt,row,D)
-        idx.append(ID)
-        features.append(feature)
-        labels.append(label)
-        cnt += 1
-    fin.close()
-    return np.array(idx), np.array(features), np.array(labels)
+    keys = []
+    with open(filename) as fin:
+        for row in DictReader(fin):
+            idx.append(row['id'])
+        keys = row.keys()
+    random.shuffle(idx)
+    cut = int(len(idx) * rate)
+    test_set = set(idx[cut:])
+    train_writer = DictWriter(open(TRAIN_FILE, 'w'), fieldnames=keys)
+    test_writer = DictWriter(open(TEST_FILE, 'w'), fieldnames=keys)
+    train_writer.writeheader()
+    test_writer.writeheader()
+    with open(filename) as fin:
+        for row in DictReader(fin):
+            if row['id'] not in test_set:
+                train_writer.writerow(row)
+            else:
+                test_writer.writerow(row)
+    print '{} end split'.format(datetime.now())
 
 def make_one_woe(values,labels,col):
+    print '{} begin calculate {} woe,values num {}'.format(datetime.now(), col, len(set(values)))
     one_woe_dict = cal_woe_dict(values, labels)
     joblib.dump(one_woe_dict, 'cache_data/woe_dict_files/{}_woe.dict'.format(col))
+    print '{} finish calculate {} woe'.format(datetime.now(),col)
 
 def processing_woe_info(filename):
     '''
     计算特征对应的woe值
-
-
     :param filename:
     :return:
     '''
-    idx = []
-    with open(filename) as fin:
-        for row in DictReader(fin):
-            ID = row['id']
-            idx.append(ID)
-    random.shuffle(idx)
-    cut = int(len(idx) * 0.95)
-    train_idx, test_idx = idx[:cut], idx[cut:]
-
-    fin = open(filename)
-    for row in DictReader(fin):
-        keys = row.keys()
-        break
-    train_writer = DictWriter(open(WOE_TRAIN_FILE, 'w'),fieldnames=keys)
-    test_writer = DictWriter(open(WOE_TEST_FILE, 'w'),fieldnames=keys)
-    train_writer.writeheader()
-    test_writer.writeheader()
-    #np.save(TRAIN_IDX_PATH, train_idx)
-    #np.save(TEST_IDX_PATH, test_idx)
-    train_set = set(train_idx)
-    del idx
-    pool = Pool(processes=4)
-    write_flag = True
+    print '{} begin calculate woe'.format(datetime.now())
+    pool = Pool(processes=PROCESSES_FOR_WOE)
     for col in COL_NAME:
+        if col == 'click':
+            continue
         if col == 'device_ip' or col == 'device_id' or col == 'device_model':
             continue
         fin = open(filename)
@@ -71,23 +64,20 @@ def processing_woe_info(filename):
             ID, value, label = row['id'], row[col], int(row['click'])
             if col == 'hour':
                 value = value[6:]
-            if ID not in train_set:
-                if write_flag:
-                    test_writer.writerow(row)
-                continue
-            if write_flag:
-                train_writer.writerow(row)
             labels.append(label)
             values.append(value)
         fin.close()
-        write_flag = False
-        print col,len(set(values))
         pool.apply_async(make_one_woe,args=(values,labels,col))
     pool.close()
     pool.join()
-
+    print '{} end calculate woe'.format(datetime.now())
 
 def clean_data_by_woe(filename):
+    '''
+    使用woe方法处理特征
+    :param filename:
+    :return:
+    '''
     woe_dict = {}
     woe_path = 'cache_data/woe_dict_files/'
     file_list = os.listdir(woe_path)
@@ -113,7 +103,6 @@ def clean_data_by_woe(filename):
             value = row[key]
             if key == 'hour':
                 value = value[6:]
-            #print key,value
             if key in woe_dict:
                 if value in woe_dict[key]:
                     woe = woe_dict[key][value]
@@ -125,13 +114,36 @@ def clean_data_by_woe(filename):
         features.append(feature)
     return np.array(idx), np.array(features), np.array(labels)
 
-def full_mode():
-    clean_data_task(ORIGIN_TRAIN_FILE, HASH_SAVE)
-    processing_woe_info(ORIGIN_TRAIN_FILE)
-    clean_data_task(WOE_TRAIN_FILE, WOE_TRAIN_SAVE, 'woe')
-    clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
+def clean_data_by_hash(filename):
+    '''
+    使用hash方法获取特征值
+    :param filename:
+    :return: idx,feature,lable
+    '''
+    features = []
+    labels = []
+    idx = []
+    D = 2**20
+    fin = open(filename)
+    cnt = 0
+    for row in DictReader(fin):
+        #return row.keys()
+        ID,feature,label = hash_data(cnt,row,D)
+        idx.append(ID)
+        features.append(feature)
+        labels.append(label)
+        cnt += 1
+    fin.close()
+    return np.array(idx), np.array(features), np.array(labels)
 
 def clean_data_task(filename,save_path,mode='hash'):
+    '''
+    读取文件,并保存对应的feature,lable
+    :param filename:
+    :param save_path:
+    :param mode:
+    :return:
+    '''
     if mode == 'hash':
         idx, features, lables = clean_data_by_hash(filename)
     else:
@@ -139,14 +151,28 @@ def clean_data_task(filename,save_path,mode='hash'):
     np.save(save_path+'_features.npy', features)
     np.save(save_path+'_lables.npy', lables)
 
+def full_mode():
+    '''
+    对文件直接进行读取
+    :return:
+    '''
+    clean_data_task(ORIGIN_TRAIN_FILE, HASH_SAVE)
+    processing_woe_info(ORIGIN_TRAIN_FILE)
+    clean_data_task(WOE_TRAIN_FILE, WOE_TRAIN_SAVE, 'woe')
+    clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
+
 def split_mode():
-    if not os.path.exists(ORIGIN_TEST_FILE.replace('.csv','')):
-        os.system('python split_csv.py {} 5000000'.format(ORIGIN_TRAIN_FILE))
-    dirname = ORIGIN_TRAIN_FILE.replace('.csv','')
+    '''
+    对文件先切分,小批量读取
+    :return:
+    '''
+    if not os.path.exists(TRAIN_FILE.replace('.csv','')):
+        os.system('python split_csv.py {} 5000000'.format(TRAIN_FILE))
+    dirname = TRAIN_FILE.replace('.csv','')
     part_train_files = os.listdir(dirname)
-    save_dirname = HASH_FEATURE.replace('.npy','/')
+    save_dirname = HASH_TRAIN_FEATURE.replace('.npy','/')
     os.system('mkdir ' + save_dirname)
-    pool = Pool(processes=2)
+    pool = Pool(processes=PROCESSES_FOR_CLEAN)
     for part_file in part_train_files:
         if '.csv' not in part_file:
             continue
@@ -154,14 +180,14 @@ def split_mode():
         pool.apply_async(clean_data_task,(dirname + '/' + part_file, save_path))
     pool.close()
     pool.join()
-    processing_woe_info(ORIGIN_TRAIN_FILE)
-    if not os.path.exists(WOE_TRAIN_FILE.replace('.csv','')):
-        os.system('python split_csv.py {} 5000000'.format(WOE_TRAIN_FILE))
-    dirname = WOE_TRAIN_FILE.replace('.csv', '')
+    clean_data_task(TEST_FILE, HASH_TEST_SAVE)
+
+    processing_woe_info(TRAIN_FILE)
+    dirname = TRAIN_FILE.replace('.csv', '')
     part_train_files = os.listdir(dirname)
     save_dirname = WOE_TRAIN_FEATURE.replace('.npy','/')
     os.system('mkdir ' + save_dirname)
-    pool = Pool(processes=2)
+    pool = Pool(processes=PROCESSES_FOR_CLEAN)
     for part_file in part_train_files:
         if '.csv' not in part_file:
             continue
@@ -169,12 +195,15 @@ def split_mode():
         pool.apply_async(clean_data_task,(dirname + '/' + part_file, save_path,'woe'))
     pool.close()
     pool.join()
-    clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
+    clean_data_task(TEST_FILE, WOE_TEST_SAVE, 'woe')
+
 if __name__ == '__main__':
     assert len(sys.argv) > 1
     mode = sys.argv[1]
     assert mode in ['full','split']
+    #split_train_test_file(ORIGIN_TRAIN_FILE, TRAIN_SIZE)
     if mode == 'full':
         full_mode()
     else:
         split_mode()
+

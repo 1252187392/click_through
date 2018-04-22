@@ -3,18 +3,14 @@
 from csv import DictReader, DictWriter
 from math import log
 import numpy as np
-from sklearn.metrics import log_loss,roc_auc_score
+from sklearn.metrics import log_loss,roc_auc_score,precision_score
 from sklearn.model_selection import train_test_split
 from config import *
 
-def data_loader(filename):
-    with open(filename) as fin:
-        reader = DictReader(fin)
-        for row in reader:
-            print row
-            col_name = row.keys()
-            print col_name
-            break
+def data_loader(features,labels,batch_size):
+    for i in range(0, features.shape[0],batch_size):
+        left = min(i+batch_size,features.shape[0])
+        yield features[i:left,:], labels[i:left]
 
 def hash_data(t,row, D):
     ID = row['id']
@@ -97,8 +93,13 @@ def get_auc_logloss(y_true, y_pred, info='train'):
     :return: auc,logloss
     '''
     auc = roc_auc_score(y_true, y_pred)
+
     logloss = log_loss(y_true, y_pred)
-    print '{} auc:{},logloss:{}'.format(info, auc, logloss)
+    click = [1 if _ >= 0.5 else 0 for _ in y_pred]
+    #p = precision_score(y_true, [1 if _ >= 0.5 else 0 for _ in y_pred])
+    x = [i if click[i] == y_true[i] else 0 for i in range(len(click))]
+    p = sum(x) * 1.0 / len(y_true)
+    print '{} auc:{},logloss:{},precision:{}'.format(info, auc, logloss, p)
     return auc, logloss
 
 def make_submit_csv(idx, scores, filename):
