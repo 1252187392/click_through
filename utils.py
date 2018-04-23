@@ -6,34 +6,34 @@ import numpy as np
 from sklearn.metrics import log_loss,roc_auc_score,precision_score
 from sklearn.model_selection import train_test_split
 from config import *
+from datetime import datetime
 
 def data_loader(features,labels,batch_size):
     for i in range(0, features.shape[0],batch_size):
         left = min(i+batch_size,features.shape[0])
         yield features[i:left,:], labels[i:left]
 
-def hash_data(t,row, D):
+def hash_data(row, D):
+    '''
+    对一行data进行hash处理
+    :param row: 原始数据
+    :param D: mod
+    :return:
+    '''
     ID = row['id']
     del row['id']
-    # process clicks
     y = 0
     if 'click' in row:
         y = int(row['click'])
         del row['click']
-    # extract date
     date = int(row['hour'][4:6])
-
     # turn hour really into hour, it was originally YYMMDDHH
     row['hour'] = row['hour'][6:]
-
-    # build x
     x = []
     for key in row:
         value = row[key]
-        # one-hot encode everything with hash trick
         index = abs(hash(key + '_' + value)) % D
         x.append(index)
-    #yield t, date, ID, x, y
     return ID, x, y
 
 def cal_woe_dict(values,labels):
@@ -66,11 +66,13 @@ def cal_woe_dict(values,labels):
 #data_loader('datas/train_part.csv')
 
 def load_hash_data():
-    features = np.load(HASH_FEATURE)
-    labels = np.load(HASH_LABLE)
-    features, test_features, labels, test_labels = train_test_split(features, labels, test_size=0.1, random_state=101)
+    train_features = np.load(HASH_TRAIN_FEATURE)
+    train_labels = np.load(HASH_TRAIN_LABLE)
 
-    return features, test_features, labels, test_labels
+    test_features = np.load(HASH_TEST_FEATURE)
+    test_labels = np.load(HASH_TEST_LABLE)
+    return np.array(train_features), np.array(test_features), np.array(train_labels), np.array(test_labels)
+
 
 def load_woe_data(delete_list = []):
     #[6, 18, 20]
@@ -93,14 +95,26 @@ def get_auc_logloss(y_true, y_pred, info='train'):
     :return: auc,logloss
     '''
     auc = roc_auc_score(y_true, y_pred)
-
     logloss = log_loss(y_true, y_pred)
     click = [1 if _ >= 0.5 else 0 for _ in y_pred]
     #p = precision_score(y_true, [1 if _ >= 0.5 else 0 for _ in y_pred])
-    x = [i if click[i] == y_true[i] else 0 for i in range(len(click))]
+    x = [1 if click[i] == y_true[i] else 0 for i in range(len(click))]
     p = sum(x) * 1.0 / len(y_true)
     print '{} auc:{},logloss:{},precision:{}'.format(info, auc, logloss, p)
     return auc, logloss
+
+def count_time(func):
+    '''
+    计时器
+    :param func:
+    :return:
+    '''
+    def wrapper(*args,**kwargs):
+        print '{},begin {}'.format(datetime.now(),func.__name__)
+        x = func(*args,**kwargs)
+        print '{},finish {}'.format(datetime.now(),func.__name__)
+        return x
+    return wrapper
 
 def make_submit_csv(idx, scores, filename):
     '''
@@ -110,7 +124,9 @@ def make_submit_csv(idx, scores, filename):
     :param filename:
     :return:None
     '''
-    fout = open(filename, 'w')
+    now = datetime.now()
+    nowstr = str(now.day)+str(now.hour)+str(now.minute)+'.csv'
+    fout = open(filename.replace('.csv',nowstr), 'w')
     writer = DictWriter(fout, fieldnames=['id', 'click'])
     writer.writeheader()
     for Id, score in zip(idx,scores):

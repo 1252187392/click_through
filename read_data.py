@@ -39,39 +39,49 @@ def split_train_test_file(filename,rate):
                 test_writer.writerow(row)
     print '{} end split'.format(datetime.now())
 
-def make_one_woe(values,labels,col):
-    print '{} begin calculate {} woe,values num {}'.format(datetime.now(), col, len(set(values)))
-    one_woe_dict = cal_woe_dict(values, labels)
-    joblib.dump(one_woe_dict, 'cache_data/woe_dict_files/{}_woe.dict'.format(col))
-    print '{} finish calculate {} woe'.format(datetime.now(),col)
+def make_one_woe(filename, colname):
+    '''
+    处理单个特征对应的woe
+    :param filename:
+    :param colname:
+    :return:
+    '''
+    print '{} begin calculate woe:{}'.format(datetime.now(), colname)
+    fin = open(filename)
+    values, labels = [], []
+    for row in DictReader(fin):
+        ID, value, label = row['id'], row[colname], int(row['click'])
+        if colname == 'hour':
+            value = value[6:]
+        labels.append(label)
+        values.append(value)
+    fin.close()
+    value_nums = len(set(values))
+    if value_nums * 1.0 / len(values) < 0.5:
+        one_woe_dict = cal_woe_dict(values, labels)
+        joblib.dump(one_woe_dict, 'cache_data/woe_dict_files/{}_woe.dict'.format(colname))
+        print '{} finish calculate {} woe'.format(datetime.now(), colname)
+    else:
+        print '{},{} values are too many,no need woe'.format(datetime.now(), colname)
 
+@count_time
 def processing_woe_info(filename):
     '''
     计算特征对应的woe值
     :param filename:
     :return:
     '''
-    print '{} begin calculate woe'.format(datetime.now())
     pool = Pool(processes=PROCESSES_FOR_WOE)
     for col in COL_NAME:
-        if col == 'click':
+        if col == 'click' or col == 'id':
             continue
-        if col == 'device_ip' or col == 'device_id' or col == 'device_model':
-            continue
-        fin = open(filename)
-        values, labels = [], []
-        for row in DictReader(fin):
-            ID, value, label = row['id'], row[col], int(row['click'])
-            if col == 'hour':
-                value = value[6:]
-            labels.append(label)
-            values.append(value)
-        fin.close()
-        pool.apply_async(make_one_woe,args=(values,labels,col))
+        #if col == 'device_ip' or col == 'device_id' or col == 'device_model':
+        #    continue
+        pool.apply_async(make_one_woe, args=(filename, col))
     pool.close()
     pool.join()
-    print '{} end calculate woe'.format(datetime.now())
 
+@count_time
 def clean_data_by_woe(filename):
     '''
     使用woe方法处理特征
@@ -112,8 +122,14 @@ def clean_data_by_woe(filename):
                 woe = hash(value)
             feature.append(woe)
         features.append(feature)
+    hash_index = []
+    for i,key in enumerate(FEATURE_NAME):
+        if key not in woe_dict:
+            hash_index.append(i)
+    np.save(WOE_HASH_INDEX,hash_index)
     return np.array(idx), np.array(features), np.array(labels)
 
+@count_time
 def clean_data_by_hash(filename):
     '''
     使用hash方法获取特征值
@@ -127,8 +143,7 @@ def clean_data_by_hash(filename):
     fin = open(filename)
     cnt = 0
     for row in DictReader(fin):
-        #return row.keys()
-        ID,feature,label = hash_data(cnt,row,D)
+        ID,feature,label = hash_data(row,D)
         idx.append(ID)
         features.append(feature)
         labels.append(label)
@@ -161,6 +176,7 @@ def full_mode():
     clean_data_task(WOE_TRAIN_FILE, WOE_TRAIN_SAVE, 'woe')
     clean_data_task(WOE_TEST_FILE, WOE_TEST_SAVE, 'woe')
 
+@count_time
 def split_mode():
     '''
     对文件先切分,小批量读取
@@ -196,12 +212,14 @@ def split_mode():
     pool.close()
     pool.join()
     clean_data_task(TEST_FILE, WOE_TEST_SAVE, 'woe')
+    np.save('cache_data/feature_name.npy',FEATURE_NAME)
 
 if __name__ == '__main__':
     assert len(sys.argv) > 1
     mode = sys.argv[1]
     assert mode in ['full','split']
-    #split_train_test_file(ORIGIN_TRAIN_FILE, TRAIN_SIZE)
+    split_train_test_file(ORIGIN_TRAIN_FILE, TRAIN_SIZE)
+    mode = 'split'
     if mode == 'full':
         full_mode()
     else:

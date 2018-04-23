@@ -8,6 +8,7 @@ assert len(sys.argv) > 2
 filename = sys.argv[1]
 nums = int(sys.argv[2])
 
+print 'split {} with nums {}'.format(filename,nums)
 cnt = 0
 with open(filename) as fin:
     dir_name = filename.replace('.csv','')
@@ -25,3 +26,5 @@ with open(filename) as fin:
             fout = open(outfile, 'w')
             print >>fout,header
     fout.close()
+
+print 'split {} over'.format(filename)

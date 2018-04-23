@@ -19,7 +19,8 @@ if len(sys.argv) > 1:
 if mode == 'hash':
     train_features,test_features, train_lables, test_labels = load_hash_data()
 else:
-    train_features, test_features, train_lables, test_labels = load_woe_data([6, 18, 20])
+    woe_hash_index = np.load(WOE_HASH_INDEX)
+    train_features, test_features, train_lables, test_labels = load_woe_data(woe_hash_index)
 
 xgb = joblib.load('./models/{}_xgb.pkl'.format(mode))
 encoder = joblib.load('./models/{}_one_hot_encoder.pkl'.format(mode))
@@ -92,8 +93,9 @@ with tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=True)) as se
     del train_lables
 
     if mode == 'woe':
+        woe_hash_index = np.load(WOE_HASH_INDEX)
         idx, features, labels = clean_data_by_woe(ORIGIN_TEST_FILE)
-        features = np.delete(features, [6, 18, 20], axis=1)
+        features = np.delete(features, woe_hash_index, axis=1)
     else:
         idx, features, labels = clean_data_by_hash(ORIGIN_TEST_FILE)
 
