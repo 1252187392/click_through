@@ -20,11 +20,8 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     if str(sys.argv[2]) == 'onehot':
         onehot_flag = True
-if mode == 'hash':
-    train_features,test_features, train_lables, test_labels = load_hash_data()
-else:
-    woe_hash_index = np.load(WOE_HASH_INDEX)
-    train_features, test_features, train_lables, test_labels = load_woe_data(woe_hash_index)
+
+train_features,test_features, train_lables, test_labels = load_data(mode)
 
 xgb = joblib.load('./models/{}_xgb.pkl'.format(mode))
 encoder = joblib.load('./models/{}_one_hot_encoder.pkl'.format(mode))

@@ -10,14 +10,12 @@ from read_data import *
 mode = 'hash'
 if len(sys.argv) > 1:
     mode = str(sys.argv[1])
-    assert mode in ['hash','woe']
-if mode == 'hash':
-    train_features,test_features, train_lables, test_lables = load_hash_data()
-else:
-    woe_hash_index = np.load(WOE_HASH_INDEX)
-    train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+assert mode in ['hash','woe']
+
+train_features,test_features, train_lables, test_labels = load_data(mode)
 
 print 'feature for train xgb',train_features.shape
+
 #train&save xgb models
 
 print test_lables
@@ -32,6 +30,7 @@ auc,loss = get_auc_logloss(train_lables, y_pred)
 
 y_pred = xgb.predict_proba(test_features)[:,1]
 auc,loss = get_auc_logloss(test_lables, y_pred,'test')
+print test_features[:2]
 
 del train_features
 del train_lables

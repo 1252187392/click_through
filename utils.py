@@ -8,6 +8,14 @@ from sklearn.model_selection import train_test_split
 from config import *
 from datetime import datetime
 
+def load_data(mode):
+    if mode == 'hash':
+        train_features, test_features, train_lables, test_lables = load_hash_data()
+    else:
+        woe_hash_index = np.load(WOE_HASH_INDEX)
+        train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+    return train_features, test_features, train_lables, test_lables
+
 def data_loader(features,labels,batch_size):
     for i in range(0, features.shape[0],batch_size):
         left = min(i+batch_size,features.shape[0])

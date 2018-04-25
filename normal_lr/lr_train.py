@@ -12,12 +12,10 @@ from read_data import *
 mode = 'hash'
 if len(sys.argv) > 1:
     mode = str(sys.argv[1])
-    if mode not in ['hash','woe']:
-        mode = 'hash'
-if mode == 'hash':
-    train_features,test_features, train_lables, test_labels = load_hash_data()
-else:
-    train_features, test_features, train_lables, test_labels = load_woe_data([6, 18, 20])
+
+assert mode in ['hash','woe']
+
+train_features,test_features, train_lables, test_labels = load_data(mode)
 
 print 'train feature {}'.format(train_features.shape)
 print 'test feature {}'.format(test_features.shape)

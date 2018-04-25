@@ -15,11 +15,8 @@ mode = 'hash'
 if len(sys.argv) > 1:
     mode = str(sys.argv[1])
     assert mode in ['hash','woe']
-if mode == 'hash':
-    train_features,test_features, train_lables, test_lables = load_hash_data()
-else:
-    woe_hash_index = np.load(WOE_HASH_INDEX)
-    train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+
+train_features,test_features, train_lables, test_labels = load_data(mode)
 
 
 xgb = joblib.load('./models/{}_xgb.pkl'.format(mode))
