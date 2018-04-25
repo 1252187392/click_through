@@ -141,6 +141,7 @@ def make_submit_csv(idx, scores, filename):
         row = {'id':Id, 'click':score}
         writer.writerow(row)
     fout.close()
+    print 'score files ' + filename.replace('.csv',nowstr)
 
 if __name__ == '__main__':
     test_woe = [[1,1,2,2,3,3],[1,0,1,0,1,0]]

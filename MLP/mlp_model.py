@@ -1,3 +1,4 @@
+#encoing:utf-8
 from xgboost import XGBClassifier
 import numpy as np
 import sys
@@ -31,15 +32,15 @@ if onehot_flag :
     leves = xgb.apply(train_features[0:1])
     feature_nums = train_features.shape[1] + encoder.transform(leves).toarray().shape[1]
 
-print train_features.shape
-print test_features.shape
-print feature_nums
+print 'one hot flag:{},feature nums:{}'.format(onehot_flag,feature_nums)
+print 'train shape:{},test shape:{}'.format(train_features.shape, test_features.shape)
 
 g = tf.Graph()
 with g.as_default():
     input_x = tf.placeholder('float', shape=[None, feature_nums])
     input_y = tf.placeholder('float', shape=[None, ])
     expand_y = tf.expand_dims(input_y, dim=1)
+
     w1 = tf.Variable(tf.random_normal([feature_nums, 128], 0, 1))
     b1 = tf.Variable(tf.zeros([128]))
     o1 = tf.matmul(input_x, w1)
@@ -61,7 +62,6 @@ with g.as_default():
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=expand_y, logits=logits3)
     target = tf.reduce_mean(loss)
     train_step = tf.train.AdamOptimizer(learning_rate=0.01).minimize(target)
-    #train_step = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(target)
 
     saver = tf.train.Saver()
 
