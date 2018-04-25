@@ -10,19 +10,23 @@ from sklearn.externals import joblib
 from config import *
 from utils import *
 
-def data_loader(features,labels,batch_size):
-    for i in range(0, features.shape[0],batch_size):
-        left = min(i+batch_size,features.shape[0])
-        yield features[i:left,:], labels[i:left]
 
-xgb = joblib.load('./models/woe_xgb.pkl')
-train_features, test_features, train_lables, test_labels = load_woe_data([6, 18, 20])
+mode = 'hash'
+if len(sys.argv) > 1:
+    mode = str(sys.argv[1])
+    assert mode in ['hash','woe']
+if mode == 'hash':
+    train_features,test_features, train_lables, test_lables = load_hash_data()
+else:
+    woe_hash_index = np.load(WOE_HASH_INDEX)
+    train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+
+
+xgb = joblib.load('./models/{}_xgb.pkl'.format(mode))
 
 values = []
 maxx = -1
 minn = 100
-
-
 
 for feature, label in data_loader(train_features,train_lables,512):
     leves = xgb.apply(feature)
@@ -39,7 +43,7 @@ for i in range(len(values)):
 del train_features
 del train_lables
 del test_features
-del test_labels
+del test_lables
 
 print maxx
 print maxx*leves.shape[1]
@@ -50,4 +54,4 @@ values = np.array(values).T
 print values.shape
 encoder = OneHotEncoder()
 encoder.fit(values)
-joblib.dump(encoder,'./models/woe_one_hot_encoder.pkl')
+joblib.dump(encoder,'./models/{}_one_hot_encoder.pkl'.format(mode))
