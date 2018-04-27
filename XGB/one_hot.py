@@ -1,23 +1,15 @@
 #encoding:utf-8
-from xgboost import XGBClassifier
-import numpy as np
 import sys
 sys.path.append('.')
-from sklearn.metrics import log_loss,roc_auc_score
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import LogisticRegression
-from sklearn.externals import joblib
-from config import *
-from utils import *
-
+from read_data import *
 
 mode = 'hash'
 if len(sys.argv) > 1:
     mode = str(sys.argv[1])
     assert mode in ['hash','woe']
 
-train_features,test_features, train_lables, test_labels = load_data(mode)
-
+train_features,test_features, train_lables, test_lables = load_data(mode)
 
 xgb = joblib.load('./models/{}_xgb.pkl'.format(mode))
 

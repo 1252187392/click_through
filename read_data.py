@@ -214,6 +214,29 @@ def split_mode():
     clean_data_task(TEST_FILE, WOE_TEST_SAVE, 'woe')
     np.save('cache_data/feature_name.npy',FEATURE_NAME)
 
+def load_data(mode):
+    if mode == 'hash':
+        train_features, test_features, train_lables, test_lables = load_hash_data()
+    else:
+        woe_hash_index = np.load(WOE_HASH_INDEX)
+        train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+    return train_features, test_features, train_lables, test_lables
+
+def load_pred_data(mode):
+    '''
+    加载test.csv数据，用以生成submit.csv文件
+    :param mode:
+    :return:
+    '''
+    assert mode in ['woe','hash']
+    if mode == 'woe':
+        woe_hash_index = np.load(WOE_HASH_INDEX)
+        idx, features, labels = clean_data_by_woe(ORIGIN_TEST_FILE)
+        features = np.delete(features, woe_hash_index, axis=1)
+    else:
+        idx, features, labels = clean_data_by_hash(ORIGIN_TEST_FILE)
+    return idx, features, labels
+
 if __name__ == '__main__':
     assert len(sys.argv) > 1
     mode = sys.argv[1]
