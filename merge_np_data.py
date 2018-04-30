@@ -19,6 +19,7 @@ def merge(dirname,feature_save,lable_save):
         else:
             features = np.vstack((features, feature))
             lables = np.hstack((lables, lable))
+        first = False
     np.save(feature_save,features)
     np.save(lable_save,lables)
 
