@@ -54,13 +54,13 @@ with g.as_default():
 
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=expand_y, logits=logits3)
     target = tf.reduce_mean(loss)
-    train_step = tf.train.AdamOptimizer(learning_rate=0.01).minimize(target)
+    train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(target)
 
     saver = tf.train.Saver()
 
 with tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=True)) as sess:
-    epochs = 20
-    batch_size = 512
+    epochs = 3
+    batch_size = 1000
     init = tf.global_variables_initializer()
     sess.run(init)
     for e in range(epochs):
@@ -75,7 +75,7 @@ with tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=True)) as se
             _, loss, o3 = sess.run([train_step,target,o1],feed_dict=feed_dict)
             tot_loss += loss
             cnt += 1
-            if cnt % 512 == 0:
+            if cnt % 1000 == 0:
                 saver.save(sess,save_path='./models/nn_model/batch_lr',global_step=cnt)
                 print e, tot_loss/cnt
         print e, tot_loss / cnt

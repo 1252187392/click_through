@@ -15,7 +15,8 @@ print 'feature for train xgb',train_features.shape
 #train&save xgb models
 
 xgb = XGBClassifier(max_depth=4,n_estimators=120,gamma=0.1,
-                    n_jos = -1,random_state=101,learning_rate=0.1)
+                    n_jos = -1,random_state=101,learning_rate=0.01,
+                    colsample_bytree=0.8)
 xgb.fit(train_features,train_lables,verbose=True,
         eval_set=[(test_features,test_lables)],eval_metric='logloss')
 joblib.dump(xgb,'./models/{}_xgb.pkl'.format(mode))

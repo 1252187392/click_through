@@ -220,6 +220,12 @@ def load_data(mode):
     else:
         woe_hash_index = np.load(WOE_HASH_INDEX)
         train_features, test_features, train_lables, test_lables = load_woe_data(woe_hash_index)
+    delete_name = ['device_ip','device_id']
+    delete_index = []
+    for name in delete_name:
+        delete_index.append(FEATURE_NAME.index(name))
+    train_features = np.delete(train_features, delete_index, axis=1)
+    test_features = np.delete(test_features, delete_index, axis=1)
     return train_features, test_features, train_lables, test_lables
 
 def load_pred_data(mode):
@@ -235,6 +241,11 @@ def load_pred_data(mode):
         features = np.delete(features, woe_hash_index, axis=1)
     else:
         idx, features, labels = clean_data_by_hash(ORIGIN_TEST_FILE)
+    delete_name = ['device_ip', 'device_id']
+    delete_index = []
+    for name in delete_name:
+        delete_index.append(FEATURE_NAME.index(name))
+    features = np.delete(features, delete_index, axis=1)
     return idx, features, labels
 
 if __name__ == '__main__':

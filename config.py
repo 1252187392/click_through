@@ -22,8 +22,8 @@ PROCESSES_FOR_WOE = 2
 #切分文件时,每PART_SIZE行切为一个文件
 PART_SIZE = 1000
 
-ORIGIN_TRAIN_FILE = 'origin_datas/part_train.csv'
-ORIGIN_TEST_FILE = 'origin_datas/part_test.csv'
+ORIGIN_TRAIN_FILE = 'origin_datas/train.csv'
+ORIGIN_TEST_FILE = 'origin_datas/test.csv'
 
 TRAIN_FILE = 'cache_data/use_train.csv'
 TEST_FILE = 'cache_data/use_test.csv'
