@@ -11,6 +11,7 @@ def merge(dirname,feature_save,lable_save):
     for part in parts:
         if 'features' not in part:
             continue
+        print part
         feature = np.load(dirname +'/'+ part)
         lable = np.load(dirname + '/'+part.replace('features','lables'))
         if first:
